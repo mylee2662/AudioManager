@@ -1,0 +1,119 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2flictqbdp3d"]
+
+[ext_resource type="Script" path="res://Scripts/bus_volumes_demo.gd" id="1_edm87"]
+
+[node name="BusVolumesDemo" type="Control" node_paths=PackedStringArray("ui_label", "bgm_label", "sfx_label", "master_label")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_edm87")
+ui_label = NodePath("Container/HBoxContainer4/Container2/Label")
+bgm_label = NodePath("Container/HBoxContainer3/Container3/Label")
+sfx_label = NodePath("Container/HBoxContainer2/Container4/Label")
+master_label = NodePath("Container/HBoxContainer/Container/Label")
+
+[node name="Container" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -20.0
+offset_right = 250.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 100
+alignment = 1
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="Container"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="UISound" type="Button" parent="Container/HBoxContainer4"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Play UI"
+
+[node name="Container2" type="VBoxContainer" parent="Container/HBoxContainer4"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Container/HBoxContainer4/Container2"]
+layout_mode = 2
+text = "UI: 0"
+
+[node name="UI" type="HSlider" parent="Container/HBoxContainer4/Container2"]
+layout_mode = 2
+value = 100.0
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Container"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BGMSound" type="Button" parent="Container/HBoxContainer3"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Play BGM"
+
+[node name="Container3" type="VBoxContainer" parent="Container/HBoxContainer3"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Container/HBoxContainer3/Container3"]
+layout_mode = 2
+text = "BGM: 0"
+
+[node name="BGM" type="HSlider" parent="Container/HBoxContainer3/Container3"]
+layout_mode = 2
+value = 100.0
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Container"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="SFXSound" type="Button" parent="Container/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+text = "Play SFX"
+
+[node name="Container4" type="VBoxContainer" parent="Container/HBoxContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Container/HBoxContainer2/Container4"]
+layout_mode = 2
+text = "SFX"
+
+[node name="SFX" type="HSlider" parent="Container/HBoxContainer2/Container4"]
+layout_mode = 2
+value = 100.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Container"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Container" type="VBoxContainer" parent="Container/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Container/HBoxContainer/Container"]
+layout_mode = 2
+text = "Master"
+
+[node name="Master" type="HSlider" parent="Container/HBoxContainer/Container"]
+layout_mode = 2
+value = 100.0
+
+[connection signal="pressed" from="Container/HBoxContainer4/UISound" to="." method="_on_ui_sound_pressed"]
+[connection signal="value_changed" from="Container/HBoxContainer4/Container2/UI" to="." method="_on_ui_value_changed"]
+[connection signal="pressed" from="Container/HBoxContainer3/BGMSound" to="." method="_on_bgm_sound_pressed"]
+[connection signal="value_changed" from="Container/HBoxContainer3/Container3/BGM" to="." method="_on_bgm_value_changed"]
+[connection signal="pressed" from="Container/HBoxContainer2/SFXSound" to="." method="_on_sfx_sound_pressed"]
+[connection signal="value_changed" from="Container/HBoxContainer2/Container4/SFX" to="." method="_on_sfx_value_changed"]
+[connection signal="value_changed" from="Container/HBoxContainer/Container/Master" to="." method="_on_master_value_changed"]
