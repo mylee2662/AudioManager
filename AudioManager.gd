@@ -2,13 +2,6 @@ extends Node
 
 enum BUS_TYPE {MASTER, UI, BGM, SFX}
 
-var int_to_bus_type: Dictionary = {
-	0: "Master",
-	1: "UI",
-	2: "BGM",
-	3: "SFX"
-}
-
 var ui_num_players: int = 8
 var bgm_num_players: int = 5
 var sfx_num_players: int = 8
@@ -84,6 +77,7 @@ func _on_ui_stream_finished(stream):
 	#print("TYPE: ", typeof(stream.name))
 	print("UI channel ", stream.get_name().to_int(), " freed up")
 	ui_dict[stream.get_name().to_int()] = null
+	
 
 func _on_bgm_stream_finished(stream):
 	# When finished playing a stream, make the player available again.
@@ -126,7 +120,7 @@ func play(sound: AudioStream, bus_type: int, channel: int):
 			sfx_channels[channel].play()
 			sfx_dict[channel] = sound
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid bus type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 	
 
 func stop(bus_type: int, channel: int):
@@ -166,7 +160,7 @@ func stop(bus_type: int, channel: int):
 			
 			sfx_dict[channel] = null
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func cont(bus_type: int, channel: int):
 	print("AudioManager: Channel ", channel, " continued")
@@ -187,7 +181,7 @@ func cont(bus_type: int, channel: int):
 			
 			sfx_channels[channel].stream_paused = false
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func pause(bus_type: int, channel: int):
 	print("AudioManager: Channel ", channel, " paused")
@@ -208,16 +202,13 @@ func pause(bus_type: int, channel: int):
 			
 			sfx_channels[channel].stream_paused = true
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func set_bus_volume(bus_type: int, value: float):
-	var bus_name: String = int_to_bus_type[bus_type]
-	var bus_index: int = AudioServer.get_bus_index(bus_name)
-	
-	if(bus_index != -1):
-		AudioServer.set_bus_volume_db(bus_index, linear_to_db(value / 100))
+	if(bus_type >= BUS_TYPE.MASTER and bus_type <= BUS_TYPE.SFX):
+		AudioServer.set_bus_volume_db(bus_type, linear_to_db(value / 100))
 	else:
-		push_warning("AudioManager: " + bus_name + " does not exist (is case-sensitive)")
+		push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func set_channel_volume(bus_type: int, channel: int, value: float):
 	match bus_type:
@@ -237,16 +228,13 @@ func set_channel_volume(bus_type: int, channel: int, value: float):
 				
 			sfx_channels[channel].volume_db = linear_to_db(value / 100)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func get_bus_volume(bus_type: int):
-	var bus_name: String = int_to_bus_type[bus_type]
-	var bus_index: int = AudioServer.get_bus_index(bus_name)
-	
-	if(bus_index != -1):
-		return db_to_linear(AudioServer.get_bus_volume_db(bus_index)) * 100
+	if(bus_type >= BUS_TYPE.MASTER and bus_type <= BUS_TYPE.SFX):
+		return db_to_linear(AudioServer.get_bus_volume_db(bus_type)) * 100
 	else:
-		push_warning("AudioManager: " + bus_name + " does not exist (is case-sensitive)")
+		push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func get_channel_volume(bus_type: int, channel: int):
 	match bus_type:
@@ -266,7 +254,7 @@ func get_channel_volume(bus_type: int, channel: int):
 				
 			return sfx_channels[channel].volume_db
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func get_channel_stream(bus_type: int, channel: int):
 	match bus_type:
@@ -277,7 +265,7 @@ func get_channel_stream(bus_type: int, channel: int):
 		BUS_TYPE.SFX:
 			return sfx_dict[channel].stream
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func get_available_channel(bus_type: int):
 	match bus_type:
@@ -288,7 +276,7 @@ func get_available_channel(bus_type: int):
 		BUS_TYPE.SFX:
 			return sfx_dict.find_key(null)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func get_oldest_used_channel(bus_type: int):
 	match bus_type:
@@ -299,7 +287,7 @@ func get_oldest_used_channel(bus_type: int):
 		BUS_TYPE.SFX:
 			return int(sfx_channels.front().name)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func tween_channel(bus_type: int, channel: int, value: float, duration: float):
 	match bus_type:
@@ -325,7 +313,7 @@ func tween_channel(bus_type: int, channel: int, value: float, duration: float):
 			tween.tween_property(sfx_channels[channel], "volume_db", linear_to_db(value / 100), duration)
 			return tween
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func fade_in_channel(bus_type: int, channel: int, value: float, duration: float):
 	#print("AudioManager: Fading in " + sound_type + " channel ", channel)
@@ -335,7 +323,6 @@ func fade_in_channel(bus_type: int, channel: int, value: float, duration: float)
 func fade_out_channel(bus_type: int, channel: int, duration: float):
 	# Making a naive assumption that the channel volume will already be nonzero when calling this function
 	# For now, duration must always be < 1.0 
-	print("AudioManager: Fading out " + int_to_bus_type[bus_type] + " channel ", channel)
 	return tween_channel(bus_type, channel, 0.0001, duration)
 
 func tween_all_channels_parallel(bus_type: int, value: float, duration: float):
@@ -356,7 +343,7 @@ func tween_all_channels_parallel(bus_type: int, value: float, duration: float):
 				if(sfx_dict[channel] != null):
 					tween.tween_property(sfx_channels[channel], "volume_db", linear_to_db(value / 100), duration)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 	
 	return tween
 
@@ -382,7 +369,7 @@ func stop_all_channels(bus_type: int):
 				if(sfx_dict[channel] != null):
 					stop(bus_type, channel)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func cont_all_channels(bus_type: int):
 	match bus_type:
@@ -399,7 +386,7 @@ func cont_all_channels(bus_type: int):
 				if(sfx_dict[channel] != null):
 					cont(bus_type, channel)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func pause_all_channels(bus_type: int):
 	match bus_type:
@@ -416,4 +403,4 @@ func pause_all_channels(bus_type: int):
 				if(sfx_dict[channel] != null):
 					pause(bus_type, channel)
 		_:
-			push_error("AudioManager: " + int_to_bus_type[bus_type] + " not a valid sound type")
+			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
