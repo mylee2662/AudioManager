@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmv83eowvypd7"]
+
+[ext_resource type="Script" path="res://Scripts/multitrack_track.gd" id="1_dkogt"]
+
+[node name="MultitrackTrack" type="HBoxContainer"]
+theme_override_constants/separation = 20
+script = ExtResource("1_dkogt")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="PlayTrack" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Play"
+
+[node name="PauseTrack" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Pause"
+
+[node name="Continue" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Continue"
+
+[node name="StopTrack" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "Stop"
+
+[node name="Container3" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="Container3"]
+layout_mode = 2
+text = "0"
+
+[node name="Volume" type="HSlider" parent="Container3"]
+layout_mode = 2
+value = 100.0
+
+[connection signal="pressed" from="HBoxContainer/PlayTrack" to="." method="_on_play_track_pressed"]
+[connection signal="pressed" from="HBoxContainer/PauseTrack" to="." method="_on_pause_track_pressed"]
+[connection signal="pressed" from="HBoxContainer/Continue" to="." method="_on_continue_pressed"]
+[connection signal="pressed" from="HBoxContainer/StopTrack" to="." method="_on_stop_track_pressed"]
+[connection signal="value_changed" from="Container3/Volume" to="." method="_on_volume_value_changed"]

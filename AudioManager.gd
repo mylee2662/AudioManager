@@ -104,7 +104,7 @@ func play(sound: AudioStream, bus_type: int, channel: int):
 			ui_channels[channel].play()
 			ui_dict[channel] = sound
 		BUS_TYPE.BGM:
-			if(channel >= bgm_num_players or channel < 0):
+			if(channel >= bgm_num_players or channel < 0 or bgm_dict[channel] != null):
 				push_error("AudioManager: Invalid channel number")
 			
 			bgm_queue.append(bgm_channels[channel])
@@ -242,17 +242,17 @@ func get_channel_volume(bus_type: int, channel: int):
 			if(channel >= ui_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 				
-			return ui_channels[channel].volume_db
+			return db_to_linear(ui_channels[channel].volume_db) * 100
 		BUS_TYPE.BGM:
 			if(channel >= bgm_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 				
-			return bgm_channels[channel].volume_db
+			return db_to_linear(bgm_channels[channel].volume_db) * 100
 		BUS_TYPE.SFX:
 			if(channel >= sfx_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 				
-			return sfx_channels[channel].volume_db
+			return db_to_linear(sfx_channels[channel].volume_db) * 100
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
@@ -393,6 +393,7 @@ func pause_all_channels(bus_type: int):
 		BUS_TYPE.UI:
 			for channel in ui_dict.keys():
 				if(ui_dict[channel] != null):
+					print("AudioManager: Pausing channel " + str(channel))
 					pause(bus_type, channel)
 		BUS_TYPE.BGM:
 			for channel in bgm_dict.keys():
