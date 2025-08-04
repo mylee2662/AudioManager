@@ -103,34 +103,53 @@ func _on_sfx_stream_finished(stream):
 	var queue_pos: int = sfx_queue.find(stream)
 	sfx_queue.remove_at(queue_pos)
 
-func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int):
+func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int = 100) -> int:
 	match bus_type:
 		BUS_TYPE.UI:
-			if(channel >= ui_num_players or channel < 0):
+			if(channel == -1):
+				channel = get_available_channel(bus_type)
+			elif(channel >= ui_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			set_channel_volume(bus_type, channel, volume)
 			
 			ui_queue.append(ui_channels[channel])
 			ui_channels[channel].stream = sound
 			ui_channels[channel].play()
 			ui_dict[channel] = sound
+			
+			return channel
 		BUS_TYPE.BGM:
-			if(channel >= bgm_num_players or channel < 0):
+			if(channel == -1):
+				channel = get_available_channel(bus_type)
+			elif(channel >= bgm_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			set_channel_volume(bus_type, channel, volume)
 			
 			bgm_queue.append(bgm_channels[channel])
 			bgm_channels[channel].stream = sound
 			bgm_channels[channel].play()
 			bgm_dict[channel] = sound
+			
+			return channel
 		BUS_TYPE.SFX:
-			if(channel >= sfx_num_players or channel < 0):
+			if(channel == -1):
+				channel = get_available_channel(bus_type)
+			elif(channel >= sfx_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			set_channel_volume(bus_type, channel, volume)
 			
 			sfx_queue.append(sfx_channels[channel])
 			sfx_channels[channel].stream = sound
 			sfx_channels[channel].play()
 			sfx_dict[channel] = sound
+			
+			return channel
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
+			return -1
 	
 
 func stop(bus_type: BUS_TYPE, channel: int):
@@ -287,7 +306,6 @@ func get_available_channel(bus_type: BUS_TYPE):
 		BUS_TYPE.BGM:
 			var free_channel = bgm_dict.find_key(null)
 			if(free_channel == null):
-				print("AC: " + str(free_channel))
 				return get_oldest_used_channel(bus_type)
 			return bgm_dict.find_key(null)
 		BUS_TYPE.SFX:
@@ -426,28 +444,37 @@ func pause_all_channels(bus_type: BUS_TYPE):
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
-func play_all_tracks(sounds: Array[AudioStream], bus_type: BUS_TYPE):
+func play_all_tracks(sounds: Array[AudioStream], bus_type: BUS_TYPE, volume: int = 100) -> Dictionary:
+	var stream_to_channel: Dictionary = {}
+	
 	match bus_type:
 		BUS_TYPE.UI:
 			if(sounds.size() > ui_num_players):
 				push_error("AudioManager: Number of audio players exceeded")
 			
 			for sound in sounds:
-				var available_channel: int = get_available_channel(bus_type)
-				play(sound, bus_type, available_channel)
+				var available_channel: int = play(sound, bus_type, -1, volume)
+				stream_to_channel[sound] = available_channel
+			
+			return stream_to_channel
 		BUS_TYPE.BGM:
 			if(sounds.size() > bgm_num_players):
 				push_error("AudioManager: Number of audio players exceeded")
 			
 			for sound in sounds:
-				var available_channel: int = get_available_channel(bus_type)
-				play(sound, bus_type, available_channel)
+				var available_channel: int = play(sound, bus_type, -1, volume)
+				stream_to_channel[sound] = available_channel
+			
+			return stream_to_channel
 		BUS_TYPE.SFX:
 			if(sounds.size() > sfx_num_players):
 				push_error("AudioManager: Number of audio players exceeded")
 			
 			for sound in sounds:
-				var available_channel: int = get_available_channel(bus_type)
-				play(sound, bus_type, available_channel)
+				var available_channel: int = play(sound, bus_type, -1, volume)
+				stream_to_channel[sound] = available_channel
+			
+			return stream_to_channel
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
+			return stream_to_channel

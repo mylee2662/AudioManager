@@ -4,25 +4,24 @@ class_name MultiTrackTrack
 @onready var label: Label = $Container3/Label
 
 var track: AudioStream
-var channel: int
+var channel: int = -1
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	label.text = str(roundi(AudioManager.get_channel_volume(AudioManager.BUS_TYPE.BGM, channel)))
+	label.text = "Channel " + str(channel) + ": " + str(roundi(AudioManager.get_channel_volume(AudioManager.BUS_TYPE.BGM, channel)))
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	pass
+	label.text = "Channel " + str(channel) + ": " + str(roundi(AudioManager.get_channel_volume(AudioManager.BUS_TYPE.BGM, channel)))
 
 
 func _on_volume_value_changed(value: float) -> void:
-	label.text = str(roundi(AudioManager.get_channel_volume(AudioManager.BUS_TYPE.BGM, channel)))
 	AudioManager.set_channel_volume(AudioManager.BUS_TYPE.BGM, channel, value)
 
 
 func _on_play_track_pressed() -> void:
-	AudioManager.play(track, AudioManager.BUS_TYPE.BGM, channel)
+	channel = AudioManager.play(track, AudioManager.BUS_TYPE.BGM, channel)
 
 
 func _on_pause_track_pressed() -> void:

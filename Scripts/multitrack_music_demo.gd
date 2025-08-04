@@ -7,7 +7,7 @@ extends Control
 
 @export var bgm_label: Label
 
-var track_controllers: Array[MultiTrackTrack]
+var track_to_controller: Dictionary
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -15,9 +15,9 @@ func _ready() -> void:
 		print(i)
 		var new_track: MultiTrackTrack = track_scene.instantiate()
 		new_track.track = tracks[i]
-		new_track.channel = i
+		#new_track.channel = i
 		menu_container.add_child(new_track)
-		track_controllers.append(new_track)
+		track_to_controller[tracks[i]] = new_track
 
 	bgm_label.text = "BGM: " + str(roundi(AudioManager.get_bus_volume(AudioManager.BUS_TYPE.BGM)))
 
@@ -28,8 +28,11 @@ func _process(delta: float) -> void:
 
 
 func _on_play_all_pressed() -> void:
-	AudioManager.play_all_tracks(tracks, AudioManager.BUS_TYPE.BGM)
-
+	var tracks_to_channel: Dictionary = AudioManager.play_all_tracks(tracks, AudioManager.BUS_TYPE.BGM)
+	
+	for track in tracks_to_channel.keys():
+		var curr_track_scene: MultiTrackTrack = track_to_controller[track]
+		curr_track_scene.channel = tracks_to_channel[track] 
 
 func _on_pause_all_pressed() -> void:
 	AudioManager.pause_all_channels(AudioManager.BUS_TYPE.BGM)
