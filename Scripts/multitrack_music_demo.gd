@@ -28,8 +28,7 @@ func _process(delta: float) -> void:
 
 
 func _on_play_all_pressed() -> void:
-	for track_controller in track_controllers:
-		AudioManager.play(track_controller.track, AudioManager.BUS_TYPE.BGM, track_controller.channel)
+	AudioManager.play_all_tracks(tracks, AudioManager.BUS_TYPE.BGM)
 
 
 func _on_pause_all_pressed() -> void:
