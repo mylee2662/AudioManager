@@ -4,7 +4,7 @@ enum BUS_TYPE {MASTER, UI, BGM, SFX}
 
 var ui_num_players: int = 8
 var bgm_num_players: int = 5
-var sfx_num_players: int = 8
+var sfx_num_players: int = 5
 
 var ui_available: Array = []  # The available players.
 var ui_queue: Array = []  # The queue of players in use
@@ -113,6 +113,9 @@ func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int
 			
 			set_channel_volume(bus_type, channel, volume)
 			
+			var queue_pos: int = ui_queue.find(ui_channels[channel])
+			if(queue_pos != -1):
+				ui_queue.remove_at(queue_pos)
 			ui_queue.append(ui_channels[channel])
 			ui_channels[channel].stream = sound
 			ui_channels[channel].play()
@@ -127,11 +130,14 @@ func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int
 			
 			set_channel_volume(bus_type, channel, volume)
 			
+			var queue_pos: int = bgm_queue.find(bgm_channels[channel])
+			if(queue_pos != -1):
+				bgm_queue.remove_at(queue_pos)
 			bgm_queue.append(bgm_channels[channel])
 			bgm_channels[channel].stream = sound
 			bgm_channels[channel].play()
 			bgm_dict[channel] = sound
-			
+			print(bgm_queue)
 			return channel
 		BUS_TYPE.SFX:
 			if(channel == -1):
@@ -141,11 +147,14 @@ func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int
 			
 			set_channel_volume(bus_type, channel, volume)
 			
+			var queue_pos: int = sfx_queue.find(sfx_channels[channel])
+			if(queue_pos != -1):
+				sfx_queue.remove_at(queue_pos)
 			sfx_queue.append(sfx_channels[channel])
 			sfx_channels[channel].stream = sound
 			sfx_channels[channel].play()
 			sfx_dict[channel] = sound
-			
+			print(sfx_queue)
 			return channel
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
@@ -319,10 +328,13 @@ func get_available_channel(bus_type: BUS_TYPE):
 func get_oldest_used_channel(bus_type: BUS_TYPE):
 	match bus_type:
 		BUS_TYPE.UI:
+			print("AudioManager: Retrieving oldest used UI channel " + str(ui_channels.front().get_name().to_int()))
 			return ui_channels.front().get_name().to_int()
 		BUS_TYPE.BGM:
+			print("AudioManager: Retrieving oldest used BGM channel " + str(bgm_channels.front().get_name().to_int()))
 			return bgm_channels.front().get_name().to_int()
 		BUS_TYPE.SFX:
+			print("AudioManager: Retrieving oldest used SFX channel " + str(sfx_channels.front().get_name().to_int()))
 			return sfx_channels.front().get_name().to_int()
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
