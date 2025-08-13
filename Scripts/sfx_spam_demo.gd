@@ -10,7 +10,7 @@ func _ready() -> void:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	if(Input.is_action_pressed("ui_accept")): 
-		AudioManager.play(sfx_stream, AudioManager.BUS_TYPE.SFX)
+		AudioManager.play(sfx_stream, AudioManager.BUS_TYPE.SFX, -1, 100)
 
 
 func _on_button_pressed() -> void:

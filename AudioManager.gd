@@ -2,6 +2,9 @@ extends Node
 
 enum BUS_TYPE {MASTER, UI, BGM, SFX}
 
+const VOLUME_MIN: float = 0.0001
+const VOLUME_MAX: float = 100
+
 var ui_num_players: int = 8
 var bgm_num_players: int = 5
 var sfx_num_players: int = 5
@@ -103,13 +106,16 @@ func _on_sfx_stream_finished(stream):
 	var queue_pos: int = sfx_queue.find(stream)
 	sfx_queue.remove_at(queue_pos)
 
-func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int = 100) -> int:
+func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int = 100, overflow: bool = false) -> int:
 	match bus_type:
 		BUS_TYPE.UI:
-			if(channel == -1):
-				channel = get_available_channel(bus_type)
+			if(channel == -1 and overflow):
+				channel = get_available_channel(bus_type, overflow)
 			elif(channel >= ui_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			if(channel == -1):
+				return channel
 			
 			set_channel_volume(bus_type, channel, volume)
 			
@@ -124,9 +130,12 @@ func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int
 			return channel
 		BUS_TYPE.BGM:
 			if(channel == -1):
-				channel = get_available_channel(bus_type)
+				channel = get_available_channel(bus_type, overflow)
 			elif(channel >= bgm_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			if(channel == -1):
+				return channel
 			
 			set_channel_volume(bus_type, channel, volume)
 			
@@ -141,9 +150,12 @@ func play(sound: AudioStream, bus_type: BUS_TYPE, channel: int = -1, volume: int
 			return channel
 		BUS_TYPE.SFX:
 			if(channel == -1):
-				channel = get_available_channel(bus_type)
+				channel = get_available_channel(bus_type, overflow)
 			elif(channel >= sfx_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
+			
+			if(channel == -1):
+				return channel
 			
 			set_channel_volume(bus_type, channel, volume)
 			
@@ -243,12 +255,16 @@ func pause(bus_type: BUS_TYPE, channel: int):
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func set_bus_volume(bus_type: BUS_TYPE, value: float):
+	value = _clamp_volume_value(value)
+	
 	if(bus_type >= BUS_TYPE.MASTER and bus_type <= BUS_TYPE.SFX):
 		AudioServer.set_bus_volume_db(bus_type, linear_to_db(value / 100))
 	else:
 		push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
 func set_channel_volume(bus_type: BUS_TYPE, channel: int, value: float):
+	value = _clamp_volume_value(value)
+	
 	match bus_type:
 		BUS_TYPE.UI:
 			if(channel >= ui_num_players or channel < 0):
@@ -305,23 +321,38 @@ func get_channel_stream(bus_type: BUS_TYPE, channel: int):
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
-func get_available_channel(bus_type: BUS_TYPE):
+func get_available_channel(bus_type: BUS_TYPE, overflow: bool):
 	match bus_type:
 		BUS_TYPE.UI:
 			var free_channel = ui_dict.find_key(null)
-			if(not free_channel):
+			
+			if(free_channel == null and overflow):
 				return get_oldest_used_channel(bus_type)
+			elif(not free_channel and not overflow):
+				push_error("AudioManager: No channels available")
+				return -1
+			
 			return free_channel
 		BUS_TYPE.BGM:
 			var free_channel = bgm_dict.find_key(null)
-			if(free_channel == null):
+			
+			if(free_channel == null and overflow):
 				return get_oldest_used_channel(bus_type)
+			elif(not free_channel and not overflow):
+				push_error("AudioManager: No channels available")
+				return -1
+			
 			return bgm_dict.find_key(null)
 		BUS_TYPE.SFX:
 			var free_channel = sfx_dict.find_key(null)
-			if(not free_channel):
+			
+			if(free_channel == null and overflow):
 				return get_oldest_used_channel(bus_type)
-			return sfx_dict.find_key(null)
+			elif(free_channel == null and not overflow):
+				push_error("AudioManager: No channels available")
+				return -1
+			
+			return free_channel
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
@@ -339,27 +370,31 @@ func get_oldest_used_channel(bus_type: BUS_TYPE):
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 
-func tween_channel(bus_type: BUS_TYPE, channel: int, value: float, duration: float):
+func tween_channel(bus_type: BUS_TYPE, channel: int, value: float, duration: float, tween: Tween = null, is_parallel: bool = false):
+	if(not tween):
+		tween = create_tween()
+	
+	tween.set_parallel(is_parallel)
+	
+	value = _clamp_volume_value(value)
+	
 	match bus_type:
 		BUS_TYPE.UI:
 			if(channel >= ui_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 				
-			var tween: Tween = create_tween()
 			tween.tween_property(ui_channels[channel], "volume_db", linear_to_db(value / 100), duration)
 			return tween
 		BUS_TYPE.BGM:
 			if(channel >= bgm_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 			
-			var tween: Tween = create_tween()
 			tween.tween_property(bgm_channels[channel], "volume_db", linear_to_db(value / 100), duration)
 			return tween
 		BUS_TYPE.SFX:
 			if(channel >= sfx_num_players or channel < 0):
 				push_error("AudioManager: Invalid channel number")
 			
-			var tween: Tween = create_tween()
 			tween.tween_property(sfx_channels[channel], "volume_db", linear_to_db(value / 100), duration)
 			return tween
 		_:
@@ -367,31 +402,30 @@ func tween_channel(bus_type: BUS_TYPE, channel: int, value: float, duration: flo
 
 func fade_in_channel(bus_type: BUS_TYPE, channel: int, value: float, duration: float):
 	#print("AudioManager: Fading in " + sound_type + " channel ", channel)
-	set_channel_volume(bus_type, channel, 0.0001)
+	set_channel_volume(bus_type, channel, VOLUME_MIN)
 	return tween_channel(bus_type, channel, value, duration)
 	
 func fade_out_channel(bus_type: BUS_TYPE, channel: int, duration: float):
 	# Making a naive assumption that the channel volume will already be nonzero when calling this function
 	# For now, duration must always be < 1.0 
-	return tween_channel(bus_type, channel, 0.0001, duration)
+	return tween_channel(bus_type, channel, VOLUME_MIN, duration)
 
 func tween_all_channels_parallel(bus_type: BUS_TYPE, value: float, duration: float):
 	var tween: Tween = create_tween()
-	tween.set_parallel(true)
 	
 	match bus_type:
 		BUS_TYPE.UI:
 			for channel in ui_dict.keys():
 				if(ui_dict[channel] != null):
-					tween.tween_property(ui_channels[channel], "volume_db", linear_to_db(value / 100), duration)
+					tween_channel(bus_type, channel, value, duration, tween, true)
 		BUS_TYPE.BGM:
 			for channel in bgm_dict.keys():
 				if(bgm_dict[channel] != null):
-					tween.tween_property(bgm_channels[channel], "volume_db", linear_to_db(value / 100), duration)
+					tween_channel(bus_type, channel, value, duration, tween, true)
 		BUS_TYPE.SFX:
 			for channel in sfx_dict.keys():
 				if(sfx_dict[channel] != null):
-					tween.tween_property(sfx_channels[channel], "volume_db", linear_to_db(value / 100), duration)
+					tween_channel(bus_type, channel, value, duration, tween, true)
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 	
@@ -402,7 +436,7 @@ func fade_in_all_channels(bus_type: BUS_TYPE, value: float, duration: float):
 	return tween_all_channels_parallel(bus_type, value, duration)
 
 func fade_out_all_channels(bus_type: BUS_TYPE, duration: float):
-	return tween_all_channels_parallel(bus_type, 0.0001, duration)
+	return tween_all_channels_parallel(bus_type, VOLUME_MIN, duration)
 	
 func stop_all_channels(bus_type: BUS_TYPE):
 	match bus_type:
@@ -490,3 +524,11 @@ func play_all_tracks(sounds: Array[AudioStream], bus_type: BUS_TYPE, volume: int
 		_:
 			push_error("AudioManager: " + str(bus_type) + " not a valid bus index")
 			return stream_to_channel
+
+func _clamp_volume_value(value: float) -> float:
+	if(value <= 0):
+		return VOLUME_MIN
+	elif(value > 100):
+		return VOLUME_MAX
+	
+	return value
